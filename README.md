@@ -52,7 +52,7 @@ CatDogBearMicroservice
    dotnet run
    ```
 
-4. The microservice will be available at `http://localhost:5000`.
+4. The microservice will be available at `http://localhost:8080`.
 
 ### Using Docker
 
