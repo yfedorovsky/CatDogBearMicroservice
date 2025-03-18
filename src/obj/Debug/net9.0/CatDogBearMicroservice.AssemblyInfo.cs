@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CatDogBearMicroservice")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b28ad3480ebbcbc87982dd68aa1bf6f111194f85")]
 [assembly: System.Reflection.AssemblyProductAttribute("CatDogBearMicroservice")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CatDogBearMicroservice")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -20,13 +20,13 @@ namespace CatDogBearMicroservice.Controllers
             _logger = logger;
         }
 
-        [HttpPost("save")]
         /// <summary>
         /// Saves pictures of the specified animal type.
         /// </summary>
         /// <param name="animalType">The type of animal to fetch pictures for.</param>
         /// <param name="numberOfPictures">The number of pictures to fetch.</param>
         /// <returns>An IActionResult indicating the result of the operation.</returns>
+        [HttpPost("save")]
         public async Task<IActionResult> SavePicture([FromQuery] string animalType, [FromQuery] int numberOfPictures)
         {
             if (string.IsNullOrEmpty(animalType) || numberOfPictures <= 0)
@@ -41,15 +41,15 @@ namespace CatDogBearMicroservice.Controllers
                 {
                     return NotFound("No pictures found.");
                 }
+
                 var saveTasks = result.Select(picture => _pictureService.SavePicture(picture, animalType));
                 await Task.WhenAll(saveTasks);
-            
 
                 return Ok("Pictures saved successfully.");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Log the exception (ex) here if needed
+                _logger.LogError(ex, "An error occurred while saving pictures.");
                 return StatusCode(500, "An error occurred while saving pictures.");
             }
         }
@@ -79,8 +79,7 @@ namespace CatDogBearMicroservice.Controllers
             }
             catch (Exception ex)
             {
-                // Log the exception (ex) here if needed
-                _logger.LogError(ex, "An error occurred while saving pictures.");
+                _logger.LogError(ex, "An error occurred while retrieving the last picture.");
                 return StatusCode(500, "An error occurred while retrieving the last picture.");
             }
         }

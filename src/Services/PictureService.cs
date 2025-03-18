@@ -33,31 +33,35 @@ namespace CatDogBearMicroservice.Services
 
         public async Task<List<string>> FetchPictures(string animalType, int number)
         {
-            _logger.LogInformation($"Fetching {number} pictures for {animalType}");
-
             string apiUrl = GetApiUrl(animalType, number);
             string response = await FetchApiResponse(apiUrl);
-
-            _logger.LogInformation($"API response: {response}");
-
             return ParseResponse(animalType, response);
         }
 
+        /// <summary>
+        /// Constructs the API URL based on the animal type and number of pictures to fetch.
+        /// </summary>
+        /// <param name="animalType"></param>
+        /// <param name="number"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
         private string GetApiUrl(string animalType, int number)
         {
-            switch (animalType.ToLower())
+            return animalType.ToLower() switch
             {
-                case "cat":
-                    return $"https://api.thecatapi.com/v1/images/search?limit={number}";
-                case "dog":
-                    return $"https://dog.ceo/api/breeds/image/random/{number}";
-                case "bear":
-                    return $"https://api.bearapi.com/v1/images/search?limit={number}";
-                default:
-                    throw new ArgumentException("Invalid animal type. Supported types are: cat, dog, bear.");
-            }
+                "cat" => $"https://api.thecatapi.com/v1/images/search?limit={number}",
+                "dog" => $"https://dog.ceo/api/breeds/image/random/{number}",
+                "bear" => $"https://api.bearapi.com/v1/images/search?limit={number}",
+                _ => throw new ArgumentException("Invalid animal type. Supported types are: cat, dog, bear.")
+            };
         }
 
+        /// <summary>
+        /// Fetches the API response for the specified URL.
+        /// </summary>
+        /// <param name="apiUrl"></param>
+        /// <returns></returns>
+        /// <exception cref="ApiException"></exception>
         private async Task<string> FetchApiResponse(string apiUrl)
         {
             try
@@ -70,61 +74,42 @@ namespace CatDogBearMicroservice.Services
             }
         }
 
-private List<string> ParseResponse(string animalType, string response)
-{
-    var urls = new List<string>();
-
-    _logger.LogInformation($"Parsing response for {animalType}: {response}");
-
-        var options = new System.Text.Json.JsonSerializerOptions
-    {
-        PropertyNameCaseInsensitive = true
-    };
-
-    if (animalType.Equals("cat", StringComparison.OrdinalIgnoreCase))
-    {
-        var catPictures = System.Text.Json.JsonSerializer.Deserialize<List<CatPicture>>(response, options);
-        _logger.LogInformation($"Deserialized cat pictures: {catPictures}");
-        foreach (var picture in catPictures)
+        /// <summary>
+        /// Parses the API response to extract the URLs of the pictures.
+        /// </summary>
+        /// <param name="animalType"></param>
+        /// <param name="response"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        private List<string> ParseResponse(string animalType, string response)
         {
-            _logger.LogInformation($"Cat picture Id: {picture.Id}");
-            _logger.LogInformation($"Cat picture URL: {picture.Url}");
-            _logger.LogInformation($"Cat picture Width: {picture.Width}");
-            _logger.LogInformation($"Cat picture Height: {picture.Height}");
-            urls.Add(picture.Url);
+            var options = new System.Text.Json.JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            return animalType.ToLower() switch
+            {
+                "cat" => System.Text.Json.JsonSerializer.Deserialize<List<CatPicture>>(response, options)?.Select(p => p.Url).ToList(),
+                "dog" => JsonConvert.DeserializeObject<DogPictureResponse>(response)?.Message,
+                "bear" => System.Text.Json.JsonSerializer.Deserialize<List<BearPicture>>(response, options)?.Select(p => p.Url).ToList(),
+                _ => throw new Exception("No URLs found in the API response")
+            } ?? throw new Exception("No URLs found in the API response");
         }
-    }
-    else if (animalType.Equals("dog", StringComparison.OrdinalIgnoreCase))
-    {
-        var dogPictures = JsonConvert.DeserializeObject<DogPictureResponse>(response);
-        _logger.LogInformation($"Deserialized dog pictures: {dogPictures.Message}");
-        urls.AddRange(dogPictures.Message);
-    }
-    else if (animalType.Equals("bear", StringComparison.OrdinalIgnoreCase))
-    {
-        var bearPictures = System.Text.Json.JsonSerializer.Deserialize<List<BearPicture>>(response);
-        _logger.LogInformation($"Deserialized bear pictures: {bearPictures}");
-        urls.AddRange(bearPictures.Select(p => p.Url));
-    }
 
-    if (urls.Count == 0)
-    {
-        throw new Exception("No URLs found in the API response");
-    }
-
-    _logger.LogInformation($"Parsed URLs: {string.Join(", ", urls)}");
-
-    return urls;
-}
-
+        /// <summary>
+        /// Saves a picture to the database.
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="animalType"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
         public async Task SavePicture(string url, string animalType)
         {
             if (string.IsNullOrEmpty(url))
             {
                 throw new ArgumentException("URL cannot be null or empty", nameof(url));
             }
-
-            _logger.LogInformation($"Saving picture: {url} for {animalType}");
 
             var picture = new Picture
             {
@@ -135,29 +120,19 @@ private List<string> ParseResponse(string animalType, string response)
 
             _dbContext.Pictures.Add(picture);
             await _dbContext.SaveChangesAsync();
-
-            _logger.LogInformation($"Saved picture: {url} for {animalType}");
         }
 
+        /// <summary>
+        /// Retrieves the last saved picture for the specified animal type.
+        /// </summary>
+        /// <param name="animalType"></param>
+        /// <returns></returns>
         public async Task<Picture> GetLastPicture(string animalType)
         {
-            _logger.LogInformation($"Retrieving last picture for {animalType}");
-
-            var picture = await _dbContext.Pictures
+            return await _dbContext.Pictures
                 .Where(p => p.AnimalType.Equals(animalType, StringComparison.OrdinalIgnoreCase))
                 .OrderByDescending(p => p.CreatedAt)
                 .FirstOrDefaultAsync();
-
-            if (picture != null)
-            {
-                _logger.LogInformation($"Retrieved last picture: {picture.Url} for {animalType}");
-            }
-            else
-            {
-                _logger.LogInformation($"No pictures found for {animalType}");
-            }
-
-            return picture;
         }
     }
 
