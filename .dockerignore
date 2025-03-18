@@ -1,0 +1,15 @@
+# Ignore the following files and directories when building the Docker image
+bin/
+obj/
+*.csproj.user
+*.sln
+*.suo
+*.user
+*.ide
+*.log
+*.vs
+Dockerfile
+.dockerignore
+.gitignore
+README.md
+**/*.md
