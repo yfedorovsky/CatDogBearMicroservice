@@ -30,7 +30,7 @@ CatDogBearMicroservice
 ## Getting Started
 
 ### Prerequisites
-- [.NET 6 SDK](https://dotnet.microsoft.com/download/dotnet/6.0)
+- [.NET 9 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/9.0)
 - Docker (for containerization)
 
 ### Running the Microservice
